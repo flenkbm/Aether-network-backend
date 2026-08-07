@@ -1,0 +1,8 @@
+{
+    "nickname" : "NotAnAwakeDog",
+    "EXP" : 43,
+    "LVL" : 9,
+    "inventory" : {"air":4, "earth":0, "fire":2, "water":2, "steam":1},
+    "created" : ["air", "earth", "fire", "water", "steam"],
+    "flag" : "Aether-Testing-zxcfghasdvbn"
+}

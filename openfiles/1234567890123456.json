@@ -1,0 +1,7 @@
+{
+    "nickname" : "JustASleepingCat",
+    "EXP" : 256,
+    "LVL" : 12,
+    "inventory" : {"air":2, "earth":1, "fire":3},
+    "created" : ["air", "earth", "fire", "water"]
+}
