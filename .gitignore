@@ -1,2 +1,2 @@
 ./closedfiles/*
-!./closedfiles/test.json
+./closedfiles/!test.json
