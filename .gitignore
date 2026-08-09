@@ -1,2 +1,4 @@
+/openfiles/*
+!/openfiles/appdata.json
 /closedfiles/*
-!/closedfiles/test.json
+!/closedfiles/testdb.txt

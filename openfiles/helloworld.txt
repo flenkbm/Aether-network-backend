@@ -1,3 +1,0 @@
-Hello, world!
-
-btw, here's the funnyflag - {"funnyflag" : "L0L-that-was-made-4-fun"}
