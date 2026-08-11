@@ -23,7 +23,7 @@ def registration(nickname: str, password: str):
             entry = f.readline().split()
     uuid = uuid4()
     with open("closedfiles/testdb.txt", "a") as f:
-        f.write(f"{nickname} {password} {uuid}")
+        f.write(f"{nickname} {password} {uuid}\n")
     with open(f"openfiles/{uuid}.json", "x") as f:
         f.write(f"""{{
     "nickname" : "{nickname}",
