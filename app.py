@@ -9,7 +9,7 @@ def login(nickname: str, password: str):
         entry = f.readline().split()
         while entry != []:
             if (entry[0] == nickname and entry[1] == password):
-                return {entry[2]}
+                return entry[2]
             entry = f.readline().split()
         return -1
 
@@ -32,4 +32,4 @@ def registration(nickname: str, password: str):
     "inventory" : {{"air":2, "earth":2, "fire":2, "water":2}},
     "created" : ["air", "earth", "fire", "water"]
 }}""")
-    return {f"{uuid}"}
+    return f"{uuid}"
