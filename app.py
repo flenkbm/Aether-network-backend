@@ -8,6 +8,6 @@ def login(nickname: str, password: str):
         entry = f.readline().split()
         while entry != []:
             if (entry[0] == nickname and entry[1] == password):
-                return int(entry[2])
+                return entry[2]
             entry = f.readline().split()
         return -1
