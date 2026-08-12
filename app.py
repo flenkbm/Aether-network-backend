@@ -5,7 +5,7 @@ app = FastAPI()
 
 @app.get("/API/login")
 def login(nickname: str, password: str):
-    with open("closedfiles/testdb.txt") as f:
+    with open("closedfiles/db.txt") as f:
         entry = f.readline().split()
         while entry != []:
             if (entry[0] == nickname and entry[1] == password):
@@ -15,14 +15,14 @@ def login(nickname: str, password: str):
 
 @app.get("/API/registration")
 def registration(nickname: str, password: str):
-    with open("closedfiles/testdb.txt") as f:
+    with open("closedfiles/db.txt") as f:
         entry = f.readline().split()
         while entry != []:
             if (entry[0] == nickname):
                 return -1
             entry = f.readline().split()
     uuid = uuid4()
-    with open("closedfiles/testdb.txt", "a") as f:
+    with open("closedfiles/db.txt", "a") as f:
         f.write(f"{nickname} {password} {uuid}\n")
     with open(f"openfiles/{uuid}.json", "x") as f:
         f.write(f"""{{
