@@ -1,4 +1,4 @@
 /openfiles/*
 !/openfiles/appdata.json
 /closedfiles/*
-!/closedfiles/testdb.txt
+!/closedfiles/tempfile.txt
