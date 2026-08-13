@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from uuid import uuid4
+import re
+import json
 
 app = FastAPI()
 
@@ -33,3 +35,46 @@ def registration(nickname: str, password: str):
     "created" : ["air", "earth", "fire", "water"]
 }}""")
     return f"{uuid}"
+
+@app.get("/API/scan")
+def scan(code: str, uuid: str):
+    appdata = dict()
+    with open("openfiles/appdata.json") as f:
+        appdata = json.load(f)
+        #
+    try:
+        userdata = dict()
+        with open(f"closedfiles/{uuid}.json", "r") as f:
+            userdata = json.load(f)
+        #
+        with open("closedfiles/codes.txt", "r") as f:
+            entry = f.readline().split()
+            while entry != []:
+                if (entry[0] == uuid):
+                    if(userdata["inventory"].get(entry[1], -1) == -1):
+                        userdata["inventory"] = int(entry[2])
+                    else:
+                        userdata["inventory"] += int(entry[2])
+                userdata["created"] = list(set(userdata["created"]).add(entry[1]))
+                #
+                userdata["EXP"] += int(entry[3])
+                if (userdata["EXP"] >= appdata["levelup-exp"][userdata["LVL"]+1]):
+                    userdata["EXP"] -= appdata["levelup-exp"][userdata["LVL"]+1]
+                    userdata["LVL"] += 1
+                entry = f.readline().split()
+        
+
+    except FileNotFoundError:
+        return -1
+
+@app.get("/API/admin/makecode")
+def makecode(code: str, element: str, count: int, exp: int, password: str):
+    with open("closedfiles/admin.code", "r") as f:
+        if (password != f.read()):
+            return "Heeey! You're not the administrator! What are you doing here? Get away!"
+    #
+    if (re.match(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', code) == None):
+        return "Bruh. R u dumb? That's NOT a valid uuid. idioooooot..."
+    #
+    with open("closedfiles/codes.txt", "a") as f:
+        f.write(f"{code} {element} {count} {exp}\n")
