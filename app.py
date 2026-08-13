@@ -55,7 +55,7 @@ def scan(code: str, uuid: str):
     except FileNotFoundError:
         return -1
     #
-    if (userdata["nextscans"] > time_ms()):
+    if (userdata["nextscans"].get(code, 0) > time_ms()):
         return -3
     #
     try:
