@@ -75,7 +75,7 @@ def scan(code: str, uuid: str):
                         userdata["EXP"] -= appdata["levelup-exp"][userdata["LVL"]+1]
                         userdata["LVL"] += 1
                     #
-                    userdata["nextscans"][code] = time_ms()+entry[4]
+                    userdata["nextscans"][code] = time_ms()+int(entry[4])
                     #
                     with open(f"openfiles/{uuid}.json", "w") as usrf:
                         json.dump(userdata, usrf)
