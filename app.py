@@ -50,7 +50,7 @@ def scan(code: str, uuid: str):
         return -1
     #
     try:
-        with open("closedfiles/codes.txt", "r") as f:
+        with open("closedfiles/codes.txt") as f:
             entry = f.readline().split()
             while entry != []:
                 if (entry[0] == code):
@@ -58,17 +58,19 @@ def scan(code: str, uuid: str):
                         userdata["inventory"][entry[1]] = int(entry[2])
                     else:
                         userdata["inventory"][entry[1]] += int(entry[2])
-                userdata["created"] = list(set(userdata["created"]).union(set((entry[1]))))
+                    userdata["created"] = list(set(userdata["created"]).union(set([entry[1]])))
+                    #
+                    userdata["EXP"] += int(entry[3])
+                    if (userdata["EXP"] >= appdata["levelup-exp"][userdata["LVL"]+1]):
+                        userdata["EXP"] -= appdata["levelup-exp"][userdata["LVL"]+1]
+                        userdata["LVL"] += 1
+                    entry = f.readline().split()
+                    #
+                    with open(f"openfiles/{uuid}.json", "w") as usrf:
+                        json.dump(userdata, usrf)
+                    return 0
                 #
-                userdata["EXP"] += int(entry[3])
-                if (userdata["EXP"] >= appdata["levelup-exp"][userdata["LVL"]+1]):
-                    userdata["EXP"] -= appdata["levelup-exp"][userdata["LVL"]+1]
-                    userdata["LVL"] += 1
                 entry = f.readline().split()
-                #
-                with open(f"openfiles/{uuid}.json", "w") as usrf:
-                    json.dump(userdata, usrf)
-                return 0
             return -1
     except FileNotFoundError:
         return -2
