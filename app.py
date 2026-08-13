@@ -50,7 +50,7 @@ def scan(code: str, uuid: str):
         with open("closedfiles/codes.txt", "r") as f:
             entry = f.readline().split()
             while entry != []:
-                if (entry[0] == uuid):
+                if (entry[0] == code):
                     if(userdata["inventory"].get(entry[1], -1) == -1):
                         userdata["inventory"] = int(entry[2])
                     else:
@@ -62,10 +62,11 @@ def scan(code: str, uuid: str):
                     userdata["EXP"] -= appdata["levelup-exp"][userdata["LVL"]+1]
                     userdata["LVL"] += 1
                 entry = f.readline().split()
-        #
-        with open(f"openfiles/{uuid}.json", "w") as f:
-            json.dump(userdata, f)
-        return 0
+                #
+                with open(f"openfiles/{uuid}.json", "w") as f:
+                    json.dump(userdata, f)
+                return 0
+            return -1
     except FileNotFoundError:
         return -1
 
