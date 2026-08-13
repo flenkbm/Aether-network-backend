@@ -44,7 +44,7 @@ def scan(code: str, uuid: str):
         #
     try:
         userdata = dict()
-        with open(f"closedfiles/{uuid}.json", "r") as f:
+        with open(f"openfiles/{uuid}.json", "r") as f:
             userdata = json.load(f)
         #
         with open("closedfiles/codes.txt", "r") as f:
