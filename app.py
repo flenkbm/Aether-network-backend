@@ -70,7 +70,7 @@ def scan(code: str, uuid: str):
 @app.get("/API/admin/makecode")
 def makecode(code: str, element: str, count: int, exp: int, password: str):
     with open("closedfiles/admin.code", "r") as f:
-        if (password != f.read()):
+        if (password != f.read().replace("\n", "")):
             return "Heeey! You're not the administrator! What are you doing here? Get away!"
     #
     if (re.match(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', code) == None):
