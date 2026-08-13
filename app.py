@@ -78,3 +78,4 @@ def makecode(code: str, element: str, count: int, exp: int, password: str):
     #
     with open("closedfiles/codes.txt", "a") as f:
         f.write(f"{code} {element} {count} {exp}\n")
+    return {"code": code, "msg":"Code added"}
