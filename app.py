@@ -62,8 +62,10 @@ def scan(code: str, uuid: str):
                     userdata["EXP"] -= appdata["levelup-exp"][userdata["LVL"]+1]
                     userdata["LVL"] += 1
                 entry = f.readline().split()
-        
-
+        #
+        with open(f"openfiles/{uuid}.json", "w") as f:
+            json.dump(userdata, f)
+        return 0
     except FileNotFoundError:
         return -1
 
