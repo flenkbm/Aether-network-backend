@@ -38,7 +38,8 @@ def registration(nickname: str, password: str):
     "EXP" : 0,
     "LVL" : 0,
     "inventory" : {{"air":2, "earth":2, "fire":2, "water":2}},
-    "created" : ["air", "earth", "fire", "water"]
+    "created" : ["air", "earth", "fire", "water"],
+    "nextscans" : {{}}
 }}""")
     return f"{uuid}"
 
