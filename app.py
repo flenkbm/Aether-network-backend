@@ -2,6 +2,12 @@ from fastapi import FastAPI
 from uuid import uuid4
 import re
 import json
+from time import time_ns
+
+
+def time_ms():
+    return time_ns()//1000
+
 
 app = FastAPI()
 
@@ -49,6 +55,9 @@ def scan(code: str, uuid: str):
     except FileNotFoundError:
         return -1
     #
+    if (userdata["nextscans"] > time_ms()):
+        return -3
+    #
     try:
         with open("closedfiles/codes.txt") as f:
             entry = f.readline().split()
@@ -64,7 +73,8 @@ def scan(code: str, uuid: str):
                     if (userdata["EXP"] >= appdata["levelup-exp"][userdata["LVL"]+1]):
                         userdata["EXP"] -= appdata["levelup-exp"][userdata["LVL"]+1]
                         userdata["LVL"] += 1
-                    entry = f.readline().split()
+                    #
+                    userdata["nextscans"][code] = time_ms()+entry[4]
                     #
                     with open(f"openfiles/{uuid}.json", "w") as usrf:
                         json.dump(userdata, usrf)
@@ -76,7 +86,7 @@ def scan(code: str, uuid: str):
         return -2
 
 @app.get("/API/admin/makecode")
-def makecode(code: str, element: str, count: int, exp: int, password: str):
+def makecode(code: str, element: str, count: int, exp: int, scanDelay: int, password: str):
     with open("closedfiles/admin.code", "r") as f:
         if (password != f.read().replace("\n", "")):
             return "Heeey! You're not the administrator! What are you doing here? Get away!"
@@ -85,5 +95,5 @@ def makecode(code: str, element: str, count: int, exp: int, password: str):
         return "Bruh. R u dumb? That's NOT a valid uuid. idioooooot..."
     #
     with open("closedfiles/codes.txt", "a") as f:
-        f.write(f"{code} {element} {count} {exp}\n")
+        f.write(f"{code} {element} {count} {exp} {scanDelay}\n")
     return {"code": code, "msg":"Code added"}
