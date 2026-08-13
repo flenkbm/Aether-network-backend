@@ -55,10 +55,10 @@ def scan(code: str, uuid: str):
             while entry != []:
                 if (entry[0] == code):
                     if(userdata["inventory"].get(entry[1], -1) == -1):
-                        userdata["inventory"] = int(entry[2])
+                        userdata["inventory"][entry[1]] = int(entry[2])
                     else:
-                        userdata["inventory"] += int(entry[2])
-                userdata["created"] = list(set(userdata["created"]).add(entry[1]))
+                        userdata["inventory"][entry[1]] += int(entry[2])
+                userdata["created"] = list(set(userdata["created"]).union(set((entry[1]))))
                 #
                 userdata["EXP"] += int(entry[3])
                 if (userdata["EXP"] >= appdata["levelup-exp"][userdata["LVL"]+1]):
