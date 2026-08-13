@@ -41,12 +41,15 @@ def scan(code: str, uuid: str):
     appdata = dict()
     with open("openfiles/appdata.json") as f:
         appdata = json.load(f)
-        #
+    #
+    userdata = dict()
     try:
-        userdata = dict()
         with open(f"openfiles/{uuid}.json", "r") as f:
             userdata = json.load(f)
-        #
+    except FileNotFoundError:
+        return -1
+    #
+    try:
         with open("closedfiles/codes.txt", "r") as f:
             entry = f.readline().split()
             while entry != []:
@@ -63,12 +66,12 @@ def scan(code: str, uuid: str):
                     userdata["LVL"] += 1
                 entry = f.readline().split()
                 #
-                with open(f"openfiles/{uuid}.json", "w") as f:
-                    json.dump(userdata, f)
+                with open(f"openfiles/{uuid}.json", "w") as usrf:
+                    json.dump(userdata, usrf)
                 return 0
             return -1
     except FileNotFoundError:
-        return -1
+        return -2
 
 @app.get("/API/admin/makecode")
 def makecode(code: str, element: str, count: int, exp: int, password: str):
