@@ -3,26 +3,111 @@ from uuid import uuid4
 import re
 import json
 from time import time_ns
+import sqlite3 as sqlite
+from hashlib import sha256
 
 
 def time_ms():
     return time_ns()//1000000
 
+def hashstr(string: str):
+    return sha256(bytes(string, encoding="utf-8")).hexdigest()
+
 
 app = FastAPI()
 
-@app.get("/API/login")
-def login(nickname: str, password: str):
-    with open("closedfiles/db.txt") as f:
-        entry = f.readline().split()
-        while entry != []:
-            if (entry[0] == nickname and entry[1] == password):
-                return entry[2]
-            entry = f.readline().split()
-        return -1
 
-@app.get("/API/registration")
-def registration(nickname: str, password: str):
+cnnct = sqlite.connect("closedfiles/db.db")
+cnnct.setconfig(sqlite.SQLITE_DBCONFIG_ENABLE_FKEY, True)
+crsr = cnnct.cursor()
+crsr.execute("""create table if not exists Credentials (
+username text,
+pswd_hash text,
+uuid text,
+primary key(username, uuid)
+)""")
+crsr.execute("""create table if not exists Userdata (
+uuid text,
+username text,
+inventory text,
+exp integer,
+lvl integer,
+scans text,
+primary key(uuid, username),
+constraint fk_uuid foreign key(uuid) references Credentials(uuid),
+constraint fk_username foreign key(username) references Credentials(username)
+)""")
+crsr.execute("""create table if not exists Sessions (
+sid text,
+uuid text,
+timestamp integer,
+primary key(sid, uuid),
+constraint fk_uuid foreign key(uuid) references Credentials(uuid)
+)""")
+crsr.close()
+
+
+@app.get("/API/userdata/{sid}")
+def getUserData(sid: str):
+    crsr = cnnct.cursor()
+    #
+    crsr.execute()
+
+@app.post("/API/login")
+def login(username: str, password: str):
+    crsr = cnnct.cursor()
+    #
+    crsr.execute(f"select uuid from Credentials where \
+                 username='{username}' and \
+                 pswd_hash='{hashstr(password)}'")
+    uuid = crsr.fetchone()
+    if uuid == None:
+        crsr.close()
+        return -1
+    #
+    sid = uuid4()
+    crsr.execute(f"select * from Sessions where \
+                 uuid={uuid}")
+    if crsr.fetchone() == None:
+        crsr.execute(f"insert into Sessions values ('{sid}', '{uuid}', {time_ms()})")
+    else:
+        crsr.execute(f"update Sessions set ('{sid}', {uuid}, {time_ms()}) where uuid='{uuid}'")
+    crsr.close()
+    return f"{sid}"
+
+
+@app.post("/API/registration")
+def registration(username: str, password: str):
+    crsr = cnnct.cursor()
+    #
+    crsr.execute(f"select * from Credentials where \
+                 username='{username}'")
+    if crsr.fetchone() != None:
+        return -1
+    #
+    uuid = uuid4()
+    crsr.execute(f"insert into Credentials values ('{username}', '{hashstr(password)}', '{uuid}')")
+    #
+    crsr.execute(f"""insert into Userdata values (
+    '{uuid}',
+    '{username}',
+    '{json.dumps({
+        "air": 2,
+        "fire": 2,
+        "water": 2,
+        "earth": 2
+    })}',
+    {0},
+    {0},
+    '{json.dumps()}',
+    )""")
+    #
+    sid = uuid4()
+    crsr.execute(f"insert into Sessions values ('{sid}', '{uuid}', {time_ms()})")
+    crsr.close()
+    return f"{sid}"
+
+
     with open("closedfiles/db.txt") as f:
         entry = f.readline().split()
         while entry != []:
@@ -43,8 +128,10 @@ def registration(nickname: str, password: str):
 }}""")
     return f"{uuid}"
 
-@app.get("/API/scan")
+@app.post("/API/scan")
 def scan(code: str, uuid: str):
+    crsr = cnnct.cursor()
+    #
     appdata = dict()
     with open("openfiles/appdata.json") as f:
         appdata = json.load(f)

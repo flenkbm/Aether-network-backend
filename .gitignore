@@ -2,3 +2,4 @@
 !/openfiles/appdata.json
 /closedfiles/*
 !/closedfiles/tempfile.txt
+test.py
