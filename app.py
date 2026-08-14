@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4
 import re
 import json
@@ -16,6 +17,13 @@ def hashstr(string: str):
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://88.210.12.42", "null"],  # or ["*"] for testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 connect = sqlite.connect("closedfiles/db.db", check_same_thread=False)
