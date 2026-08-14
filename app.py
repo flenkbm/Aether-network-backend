@@ -5,6 +5,7 @@ import json
 from time import time_ns
 import sqlite3 as sqlite
 from hashlib import sha256
+from pydantic import BaseModel
 
 
 def time_ms():
@@ -113,10 +114,15 @@ def getUserData(sid: str):
     #
     return userDataByUUID(uuid)
 
+class logdata(BaseModel):
+    username: str
+    password: str
 
 @app.post("/API/login")
-def login(username: str, password: str):
+def login(dt: logdata):
     crsr = connect.cursor()
+    username = dt.username
+    password = dt.password
     #
     crsr.execute(f"select uuid from Credentials where \
                  username='{username}' and \
@@ -138,8 +144,10 @@ def login(username: str, password: str):
 
 
 @app.post("/API/registration")
-def registration(username: str, password: str):
+def registration(dt: logdata):
     crsr = connect.cursor()
+    username = dt.username
+    password = dt.password
     #
     crsr.execute(f"select * from Credentials where \
                  username='{username}'")
@@ -189,9 +197,15 @@ def registration(username: str, password: str):
 }}""")
     return f"{uuid}"
 
+class scandata(BaseModel):
+    code: str
+    sid: str
+
 @app.post("/API/scan")
-def scan(code: str, sid: str):
+def scan(dt: scandata):
     crsr = connect.cursor()
+    code = dt.code
+    sid = dt.sid
     #
     uuid = UUIDfromSID(sid)
     if uuid == -1:
@@ -262,17 +276,25 @@ def scan(code: str, sid: str):
     except FileNotFoundError:
         return -2
 
-@app.get("/API/admin/makecode")
-def makecode(code: str, element: str, amount: int, EXP: int, cooldown: int, password: str):
+class makecodedata(BaseModel):
+    code: str
+    element: str
+    amount: int
+    EXP: int
+    cooldown: int
+    password: str
+
+@app.post("/API/admin/makecode")
+def makecode(dt: makecodedata):
     with open("closedfiles/admin.code", "r") as f:
-        if (hashstr(password) != f.read().replace("\n", "")):
+        if (hashstr(dt.password) != f.read().replace("\n", "")):
             return "Heeey! You're not the administrator! What are you doing here? Get away!"
     #
-    if (re.match(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', code) == None):
+    if (re.match(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', dt.code) == None):
         return "Bruh. R u dumb? That's NOT a valid uuid."
     #
     crsr = connect.cursor()
-    crsr.execute(f"insert into Codes values ('{code}', '{element}', {amount}, {EXP}, {cooldown})")
+    crsr.execute(f"insert into Codes values ('{dt.code}', '{dt.element}', {dt.amount}, {dt.EXP}, {dt.cooldown})")
     connect.commit()
     crsr.close()
-    return {"code": code, "msg":"Code added"}
+    return {"code": dt.code, "msg":"Code added"}
