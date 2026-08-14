@@ -17,9 +17,8 @@ def hashstr(string: str):
 app = FastAPI()
 
 
-cnnct = sqlite.connect("closedfiles/db.db")
-cnnct.setconfig(sqlite.SQLITE_DBCONFIG_ENABLE_FKEY, True)
-crsr = cnnct.cursor()
+connect = sqlite.connect("closedfiles/db.db")
+crsr = connect.cursor()
 crsr.execute("""create table if not exists Credentials (
 username text,
 pswd_hash text,
@@ -30,55 +29,117 @@ crsr.execute("""create table if not exists Userdata (
 uuid text,
 username text,
 inventory text,
-exp integer,
-lvl integer,
+EXP integer,
+LVL integer,
 scans text,
-primary key(uuid, username),
-constraint fk_uuid foreign key(uuid) references Credentials(uuid),
-constraint fk_username foreign key(username) references Credentials(username)
+primary key(uuid, username)
 )""")
 crsr.execute("""create table if not exists Sessions (
 sid text,
 uuid text,
 timestamp integer,
-primary key(sid, uuid),
-constraint fk_uuid foreign key(uuid) references Credentials(uuid)
+primary key(sid, uuid)
 )""")
+crsr.execute("""create table if not exists Codes (
+code text,
+element text,
+amount integer,
+EXP integer,
+cooldown integer,
+primary key (code)
+)""")
+connect.commit()
 crsr.close()
+
+
+SESION_TIMEOUT = 1000 * 60 * 60 * 12
+APPDATA = json.load(open("openfiles/appdata.json"))
+
+
+def userDataByUUID(uuid: str):
+    crsr = connect.cursor()
+    crsr.execute(f"select username, inventory, EXP, LVL, scans from Userdata where uuid='{uuid}'")
+    raw_userdata = crsr.fetchone()
+    crsr.close()
+    return {
+        "username": raw_userdata[0],
+        "inventory": json.loads(raw_userdata[1]),
+        "EXP": raw_userdata[2],
+        "LVL": raw_userdata[3],
+        "scans": json.loads(raw_userdata[4])
+    }
+
+def UUIDfromSID(sid: str):
+    crsr = connect.cursor()
+    crsr.execute(f"select uuid, timestamp from Sessions where sid='{sid}'")
+    sd = crsr.fetchone()# session data
+    if sd == None:
+        crsr.close()
+        return -1
+    #
+    if(sd[1] + SESION_TIMEOUT < time_ms()):
+        crsr.execute(f"delete from Sessions where sid='{sid}'")
+        connect.commit()
+        crsr.close()
+        return -1
+    #
+    return sd[0]
+
+def updateEXP(userdata: dict):
+    while userdata["EXP"] >= APPDATA["levelup-EXP"][userdata["LVL"]+1]:
+        userdata["EXP"] -= APPDATA["levelup-EXP"][userdata["LVL"]+1]
+        userdata["LVL"] += 1
+
+def updateUserData(userdata: dict, uuid: str):
+    crsr = connect.cursor()
+    #
+    crsr.execute(f"""update Userdata set 
+        username='{userdata["username"]}',
+        inventory='{json.dumps(userdata["inventory"])}',
+        EXP={userdata["EXP"]},
+        LVL={userdata["LVL"]},
+        scans='{json.dumps(userdata["scans"])}'
+        where uuid='{uuid}'""")
+    #
+    connect.commit()
+    crsr.close()
 
 
 @app.get("/API/userdata/{sid}")
 def getUserData(sid: str):
-    crsr = cnnct.cursor()
+    uuid = UUIDfromSID(sid)
+    if uuid == -1:
+        return -1
     #
-    crsr.execute()
+    return userDataByUUID(uuid)
+
 
 @app.post("/API/login")
 def login(username: str, password: str):
-    crsr = cnnct.cursor()
+    crsr = connect.cursor()
     #
     crsr.execute(f"select uuid from Credentials where \
                  username='{username}' and \
                  pswd_hash='{hashstr(password)}'")
-    uuid = crsr.fetchone()
+    uuid = crsr.fetchone()[0]
     if uuid == None:
         crsr.close()
         return -1
     #
     sid = uuid4()
-    crsr.execute(f"select * from Sessions where \
-                 uuid={uuid}")
+    crsr.execute(f"select * from Sessions where uuid='{uuid}'")
     if crsr.fetchone() == None:
         crsr.execute(f"insert into Sessions values ('{sid}', '{uuid}', {time_ms()})")
     else:
-        crsr.execute(f"update Sessions set ('{sid}', {uuid}, {time_ms()}) where uuid='{uuid}'")
+        crsr.execute(f"update Sessions set sid='{sid}', timestamp={time_ms()} where uuid='{uuid}'")
+    connect.commit()
     crsr.close()
     return f"{sid}"
 
 
 @app.post("/API/registration")
 def registration(username: str, password: str):
-    crsr = cnnct.cursor()
+    crsr = connect.cursor()
     #
     crsr.execute(f"select * from Credentials where \
                  username='{username}'")
@@ -97,16 +158,16 @@ def registration(username: str, password: str):
         "water": 2,
         "earth": 2
     })}',
-    {0},
-    {0},
-    '{json.dumps()}',
+    0,
+    0,
+    '{json.dumps({"":""})}'
     )""")
     #
     sid = uuid4()
     crsr.execute(f"insert into Sessions values ('{sid}', '{uuid}', {time_ms()})")
+    connect.commit()
     crsr.close()
     return f"{sid}"
-
 
     with open("closedfiles/db.txt") as f:
         entry = f.readline().split()
@@ -129,8 +190,36 @@ def registration(username: str, password: str):
     return f"{uuid}"
 
 @app.post("/API/scan")
-def scan(code: str, uuid: str):
-    crsr = cnnct.cursor()
+def scan(code: str, sid: str):
+    crsr = connect.cursor()
+    #
+    uuid = UUIDfromSID(sid)
+    if uuid == -1:
+        crsr.close()
+        return -1
+    #
+    crsr.execute(f"select element, amount, EXP, cooldown from Codes where code='{code}'")
+    res = crsr.fetchone()
+    if res == None:
+        crsr.close()
+        return -2
+    #
+    userdata = userDataByUUID(uuid)
+    if userdata["scans"].get(code, 0) + res[3] > time_ms():
+        crsr.close()
+        return -3
+    #
+    userdata["EXP"] += res[2]
+    updateEXP(userdata)
+    if (userdata["inventory"].get(res[0], -1) == -1):
+        userdata["inventory"][res[0]] = res[1]
+    else:
+        userdata["inventory"][res[0]] += res[1]
+    userdata["scans"][code] = time_ms()
+    #
+    updateUserData(userdata, uuid)
+    crsr.close()
+    return 0
     #
     appdata = dict()
     with open("openfiles/appdata.json") as f:
@@ -158,8 +247,8 @@ def scan(code: str, uuid: str):
                     userdata["created"] = list(set(userdata["created"]).union(set([entry[1]])))
                     #
                     userdata["EXP"] += int(entry[3])
-                    if (userdata["EXP"] >= appdata["levelup-exp"][userdata["LVL"]+1]):
-                        userdata["EXP"] -= appdata["levelup-exp"][userdata["LVL"]+1]
+                    if (userdata["EXP"] >= appdata["levelup-EXP"][userdata["LVL"]+1]):
+                        userdata["EXP"] -= appdata["levelup-EXP"][userdata["LVL"]+1]
                         userdata["LVL"] += 1
                     #
                     userdata["nextscans"][code] = time_ms()+int(entry[4])
@@ -174,14 +263,16 @@ def scan(code: str, uuid: str):
         return -2
 
 @app.get("/API/admin/makecode")
-def makecode(code: str, element: str, count: int, exp: int, scanDelay: int, password: str):
+def makecode(code: str, element: str, amount: int, EXP: int, cooldown: int, password: str):
     with open("closedfiles/admin.code", "r") as f:
-        if (password != f.read().replace("\n", "")):
+        if (hashstr(password) != f.read().replace("\n", "")):
             return "Heeey! You're not the administrator! What are you doing here? Get away!"
     #
     if (re.match(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', code) == None):
-        return "Bruh. R u dumb? That's NOT a valid uuid. idioooooot..."
+        return "Bruh. R u dumb? That's NOT a valid uuid."
     #
-    with open("closedfiles/codes.txt", "a") as f:
-        f.write(f"{code} {element} {count} {exp} {scanDelay}\n")
+    crsr = connect.cursor()
+    crsr.execute(f"insert into Codes values ('{code}', '{element}', {amount}, {EXP}, {cooldown})")
+    connect.commit()
+    crsr.close()
     return {"code": code, "msg":"Code added"}
