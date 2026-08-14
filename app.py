@@ -18,7 +18,7 @@ def hashstr(string: str):
 app = FastAPI()
 
 
-connect = sqlite.connect("closedfiles/db.db")
+connect = sqlite.connect("closedfiles/db.db", check_same_thread=False)
 crsr = connect.cursor()
 crsr.execute("""create table if not exists Credentials (
 username text,
@@ -121,12 +121,10 @@ class logdata(BaseModel):
 @app.post("/API/login")
 def login(dt: logdata):
     crsr = connect.cursor()
-    username = dt.username
-    password = dt.password
     #
     crsr.execute(f"select uuid from Credentials where \
-                 username='{username}' and \
-                 pswd_hash='{hashstr(password)}'")
+                 username='{dt.username}' and \
+                 pswd_hash='{hashstr(dt.password)}'")
     uuid = crsr.fetchone()[0]
     if uuid == None:
         crsr.close()
@@ -146,20 +144,18 @@ def login(dt: logdata):
 @app.post("/API/registration")
 def registration(dt: logdata):
     crsr = connect.cursor()
-    username = dt.username
-    password = dt.password
     #
     crsr.execute(f"select * from Credentials where \
-                 username='{username}'")
+                 username='{dt.username}'")
     if crsr.fetchone() != None:
         return -1
     #
     uuid = uuid4()
-    crsr.execute(f"insert into Credentials values ('{username}', '{hashstr(password)}', '{uuid}')")
+    crsr.execute(f"insert into Credentials values ('{dt.username}', '{hashstr(dt.password)}', '{uuid}')")
     #
     crsr.execute(f"""insert into Userdata values (
     '{uuid}',
-    '{username}',
+    '{dt.username}',
     '{json.dumps({
         "air": 2,
         "fire": 2,
