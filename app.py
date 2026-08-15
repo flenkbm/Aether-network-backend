@@ -57,6 +57,9 @@ EXP integer,
 cooldown integer,
 primary key (code)
 )""")
+crsr.execute("""create temp table if not exists AdminLog (
+timestamp integer
+)""")
 connect.commit()
 crsr.close()
 
@@ -290,9 +293,18 @@ class makecode_data(BaseModel):
 
 def checkadmin(password):
     with open("closedfiles/admin.code", "r") as f:
+        crsr = connect.cursor()
+        crsr.execute("select * from AdminLog order by timestamp desc")
+        lastlogs = crsr.fetchall()[:10]
+        if (lastlogs[-1][0] + 3600000 >= time_ms() and len(lastlogs) == 10):
+            return False
         if (hashstr(password) != f.read().replace("\n", "")):
+            crsr.execute("insert into AdminLog values "+str(time_ms()))
+            connect.commit()
+            crsr.close()
             return False
         else:
+            crsr.close()
             return True
 
 @app.post("/API/admin/makecode")
