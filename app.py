@@ -336,7 +336,6 @@ class getuser_data(BaseModel):
 
 @app.post("/API/admin/getuser")
 def getuser(dt: getuser_data):
-    return dt.username
     if not checkadmin(dt.password):
         return "Heeey! You're not the administrator! What are you doing here? Get away!"
     #
