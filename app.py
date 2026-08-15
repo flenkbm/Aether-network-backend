@@ -122,12 +122,12 @@ def getUserData(sid: str):
     #
     return userDataByUUID(uuid)
 
-class logdata(BaseModel):
+class log_data(BaseModel):
     username: str
     password: str
 
 @app.post("/API/login")
-def login(dt: logdata):
+def login(dt: log_data):
     crsr = connect.cursor()
     #
     crsr.execute(f"select uuid from Credentials where \
@@ -150,7 +150,7 @@ def login(dt: logdata):
 
 
 @app.post("/API/registration")
-def registration(dt: logdata):
+def registration(dt: log_data):
     crsr = connect.cursor()
     #
     crsr.execute(f"select * from Credentials where \
@@ -201,12 +201,12 @@ def registration(dt: logdata):
 }}""")
     return f"{uuid}"
 
-class scandata(BaseModel):
+class scan_data(BaseModel):
     code: str
     sid: str
 
 @app.post("/API/scan")
-def scan(dt: scandata):
+def scan(dt: scan_data):
     crsr = connect.cursor()
     code = dt.code
     sid = dt.sid
@@ -280,7 +280,7 @@ def scan(dt: scandata):
     except FileNotFoundError:
         return -2
 
-class makecodedata(BaseModel):
+class makecode_data(BaseModel):
     code: str
     element: str
     amount: int
@@ -288,17 +288,59 @@ class makecodedata(BaseModel):
     cooldown: int
     password: str
 
-@app.post("/API/admin/makecode")
-def makecode(dt: makecodedata):
+def checkadmin(password):
     with open("closedfiles/admin.code", "r") as f:
-        if (hashstr(dt.password) != f.read().replace("\n", "")):
-            return "Heeey! You're not the administrator! What are you doing here? Get away!"
+        if (hashstr(password) != f.read().replace("\n", "")):
+            return False
+        else:
+            return True
+
+@app.post("/API/admin/makecode")
+def makecode(dt: makecode_data):
+    if not checkadmin(dt.password):
+        return "Heeey! You're not the administrator! What are you doing here? Get away!"
     #
     if (re.match(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', dt.code) == None):
-        return "Bruh. R u dumb? That's NOT a valid uuid."
+        return "Bruh. That's NOT a valid uuid."
     #
     crsr = connect.cursor()
     crsr.execute(f"insert into Codes values ('{dt.code}', '{dt.element}', {dt.amount}, {dt.EXP}, {dt.cooldown})")
     connect.commit()
     crsr.close()
     return {"code": dt.code, "msg":"Code added"}
+
+class modifyuser_data(BaseModel):
+    username: str
+    variable: str
+    value: str
+    password: str
+
+@app.post("/API/admin/modifyuser")
+def modifyuser(dt: modifyuser_data):
+    if not checkadmin(dt.password):
+        return "Heeey! You're not the administrator! What are you doing here? Get away!"
+    #
+    crsr = connect.cursor()
+    crsr.execute(f"select uuid from Credentials where username='{dt.username}'")
+    uuid = crsr.fetchone()
+    userdata = userDataByUUID(uuid)
+    userdata[dt.variable] = dt.value
+    updateUserData(userdata, uuid)
+    crsr.close()
+    return userDataByUUID(uuid)
+
+
+class getuser_data(BaseModel):
+    username: str
+    password: str
+
+@app.post("/API/admin/getuser")
+def getuser(dt: getuser_data):
+    if not checkadmin(dt.password):
+        return "Heeey! You're not the administrator! What are you doing here? Get away!"
+    #
+    crsr = connect.cursor()
+    crsr.execute(f"select uuid from Credentials where username='{dt.username}'")
+    uuid = crsr.fetchone()
+    crsr.close()
+    return userDataByUUID(uuid)
