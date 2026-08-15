@@ -345,5 +345,6 @@ def getuser(dt: getuser_data):
     if uuid == None:
         crsr.close()
         return "User not found :("
+    return uuid
     crsr.close()
     return userDataByUUID(uuid)
