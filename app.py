@@ -94,7 +94,7 @@ def UUIDfromSID(sid: str):
     #
     return sd[0]
 
-def updateEXP(userdata: dict):
+def updateLVL(userdata: dict):
     while userdata["EXP"] >= APPDATA["levelup-EXP"][userdata["LVL"]+1]:
         userdata["EXP"] -= APPDATA["levelup-EXP"][userdata["LVL"]+1]
         userdata["LVL"] += 1
@@ -228,7 +228,7 @@ def scan(dt: scan_data):
         return -3
     #
     userdata["EXP"] += res[2]
-    updateEXP(userdata)
+    updateLVL(userdata)
     if (userdata["inventory"].get(res[0], -1) == -1):
         userdata["inventory"][res[0]] = res[1]
     else:
@@ -328,7 +328,13 @@ def modifyuser(dt: modifyuser_data):
         return "User not found :("
     uuid = uuid[0]
     userdata = userDataByUUID(uuid)
-    userdata[dt.variable] = dt.value
+    if dt.variable in ["EXP", "LVL"]:
+        userdata[dt.variable] = int(dt.value)
+        updateLVL(userdata)
+    elif dt.variable == "username":
+        userdata[dt.variable] = dt.value
+    elif dt.variable in ["inventory", "scans"]:
+        userdata[dt.variable][json.loads(dt.value)[0]] = json.loads(dt.value)[1]
     updateUserData(userdata, uuid)
     crsr.close()
     return userDataByUUID(uuid)
