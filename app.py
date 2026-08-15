@@ -323,6 +323,10 @@ def modifyuser(dt: modifyuser_data):
     crsr = connect.cursor()
     crsr.execute(f"select uuid from Credentials where username='{dt.username}'")
     uuid = crsr.fetchone()
+    if uuid == None:
+        crsr.close()
+        return "User not found :("
+    uuid = uuid[0]
     userdata = userDataByUUID(uuid)
     userdata[dt.variable] = dt.value
     updateUserData(userdata, uuid)
@@ -345,6 +349,6 @@ def getuser(dt: getuser_data):
     if uuid == None:
         crsr.close()
         return "User not found :("
-    return uuid
+    uuid = uuid[0]
     crsr.close()
     return userDataByUUID(uuid)
