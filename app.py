@@ -284,6 +284,14 @@ def scan(dt: scan_data):
     except FileNotFoundError:
         return -2
 
+@app.get("API/toplist")
+def toplist():
+    crsr = connect.cursor()
+    crsr.execute("select username, LVL from Userdata order by LVL desc, EXP desc")
+    res = crsr.fetchall()[:10]
+    crsr.close()
+    return res
+
 class makecode_data(BaseModel):
     code: str
     element: str
