@@ -342,5 +342,8 @@ def getuser(dt: getuser_data):
     crsr = connect.cursor()
     crsr.execute(f"select uuid from Credentials where username='{dt.username}'")
     uuid = crsr.fetchone()
+    if uuid == None:
+        crsr.close()
+        return "User not found :("
     crsr.close()
     return userDataByUUID(uuid)
