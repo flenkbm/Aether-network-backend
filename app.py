@@ -7,6 +7,8 @@ from time import time_ns
 import sqlite3 as sqlite
 from hashlib import sha256
 from pydantic import BaseModel
+import gspread
+import pandas as pd
 
 
 def time_ms():
@@ -65,6 +67,11 @@ connect.commit()
 crsr.close()
 
 
+gc = gspread.service_account()
+RECIPES = pd.DataFrame(gc.\
+    open_by_url("https://docs.google.com/spreadsheets/d/1y7vBDIC67i9duQCJv5KWvk5D1G5KdPVZg4C5pnqgs04").\
+    worksheet("4code").get_all_records())
+RECIPES.set_index("index", drop="index", inplace=True)
 SESION_TIMEOUT = 1000 * 60 * 60 * 12
 APPDATA = json.load(open("openfiles/appdata.json"))
 
@@ -292,6 +299,35 @@ def toplist():
     res = crsr.fetchall()[:10]
     crsr.close()
     return res
+
+class craft_data(BaseModel):
+    sid: str
+    el1: str
+    el2: str
+
+@app.post("/API/attemptCraft")
+def attemptCraft(dt: craft_data):
+    uuid = UUIDfromSID(dt.sid)
+    if uuid == -1:
+        return -1
+    #
+    userdata = userDataByUUID(uuid)
+    if (userdata["inventory"].get(dt.el1, -1) < 1) or (userdata["inventory"].get(dt.el2, -1) < 1):
+        return -2
+    #
+    try:
+        if RECIPES[dt.el1][dt.el2] == "":
+            return -3
+    except Exception as e:
+        print(e)
+        return -3
+    userdata["inventory"][dt.el1] -= 1
+    userdata["inventory"][dt.el2] -= 1
+    userdata["inventory"][RECIPES[dt.el1][dt.el2]] = userdata["inventory"].get(RECIPES[dt.el1][dt.el2], 0)+1
+    userdata["EXP"] += 30
+    updateLVL(userdata)
+    updateUserData(userdata, uuid)
+    return 0
 
 class makecode_data(BaseModel):
     code: str
