@@ -137,10 +137,11 @@ def login(dt: log_data):
     crsr.execute(f"select uuid from Credentials where \
                  username='{dt.username}' and \
                  pswd_hash='{hashstr(dt.password)}'")
-    uuid = crsr.fetchone()[0]
+    uuid = crsr.fetchone()
     if uuid == None:
         crsr.close()
         return -1
+    uuid = uuid[0]
     #
     sid = uuid4()
     crsr.execute(f"select * from Sessions where uuid='{uuid}'")
