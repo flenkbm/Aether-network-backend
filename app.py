@@ -372,7 +372,7 @@ def makecode(dt: makecode_data):
         return "Bruh. That's NOT a valid uuid."
     #
     crsr = connect.cursor()
-    crsr.execute(f"select * from code where code='{dt.code}'")
+    crsr.execute(f"select * from Codes where code='{dt.code}'")
     if crsr.fetchone != None:
         return "Code already exists"
     crsr.execute(f"insert into Codes values ('{dt.code}', '{dt.element}', {dt.amount}, {dt.exp}, {dt.cooldown})")
