@@ -372,11 +372,13 @@ def makecode(dt: makecode_data):
         return "Bruh. That's NOT a valid uuid."
     #
     crsr = connect.cursor()
+    crsr.execute(f"select * from code where code='{dt.code}'")
+    if crsr.fetchone != None:
+        return "Code already exists"
     crsr.execute(f"insert into Codes values ('{dt.code}', '{dt.element}', {dt.amount}, {dt.exp}, {dt.cooldown})")
     connect.commit()
     crsr.close()
     return {"code": dt.code, "msg":"Code added"}
-print(makecode(makecode_data(code="1d44c80d-ef01-45ac-9eb1-81093f8849ce", element="fire", amount=1, exp=20, cooldown=7200000, password="-Q3kYMKB53dnqt3o7DNe9gNYRwY_QNtA86EZSLpc_hw")))
 
 class modifyuser_data(BaseModel):
     username: str
