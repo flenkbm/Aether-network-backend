@@ -303,6 +303,10 @@ def toplist():
     crsr = connect.cursor()
     crsr.execute("select username, LVL from Userdata order by LVL desc, EXP desc")
     res = crsr.fetchall()[:10]
+    for i in range(len(res)):
+        if res[i][1] < 0:
+            res = res[:i]
+            break
     crsr.close()
     return res
 
