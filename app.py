@@ -241,7 +241,7 @@ def scan(dt: scan_data):
         return -2
     #
     userdata = userDataByUUID(uuid)
-    if userdata["scans"].get(code, 0) + res[3] > time_ms():
+    if userdata["scans"].get(code, 0) > time_ms():
         crsr.close()
         return -3
     #
@@ -251,7 +251,7 @@ def scan(dt: scan_data):
         userdata["inventory"][res[0]] = res[1]
     else:
         userdata["inventory"][res[0]] += res[1]
-    userdata["scans"][code] = time_ms()
+    userdata["scans"][code] = time_ms() + res[3]
     #
     updateUserData(userdata, uuid)
     crsr.close()
