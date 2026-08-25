@@ -324,7 +324,10 @@ def attemptCraft(dt: craft_data):
     userdata["inventory"][dt.el1] -= 1
     userdata["inventory"][dt.el2] -= 1
     userdata["inventory"][RECIPES[dt.el1][dt.el2]] = userdata["inventory"].get(RECIPES[dt.el1][dt.el2], 0)+1
-    userdata["EXP"] += 30
+    if (dt.el1 in ["air", "fire", "water", "earth"] and dt.el2 in ["air", "fire", "water", "earth"]):
+        userdata["EXP"] += 20
+    else:
+        userdata["EXP"] += 60
     updateLVL(userdata)
     updateUserData(userdata, uuid)
     return 0
