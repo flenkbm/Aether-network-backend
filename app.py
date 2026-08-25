@@ -436,10 +436,13 @@ def banuser(dt: banuser_data):
     crsr.execute(f"select uuid from Credentials where username='{dt.username}'")
     uuid = crsr.fetchone()[0]
     crsr.execute(f"update Credentials set uuid='{'banned#checkcode'+uuid}' where username='{dt.username}'")
-    crsr.execute(f"delete from Sessions where uuid='{uuid}'")
+    try:
+        crsr.execute(f"delete from Sessions where uuid='{uuid}'")
+    except:
+        pass
     userdata = userDataByUUID(uuid)
     userdata["LVL"] -= 100
-    updateUserData(userdata)
+    updateUserData(userdata, uuid)
     connect.commit()
     crsr.close()
     return {"user":dt.username,"res":"banned","uuid":uuid}
