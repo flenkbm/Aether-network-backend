@@ -373,7 +373,7 @@ def makecode(dt: makecode_data):
     #
     crsr = connect.cursor()
     crsr.execute(f"select * from Codes where code='{dt.code}'")
-    if crsr.fetchone != None:
+    if crsr.fetchone() != None:
         return "Code already exists"
     crsr.execute(f"insert into Codes values ('{dt.code}', '{dt.element}', {dt.amount}, {dt.exp}, {dt.cooldown})")
     connect.commit()
