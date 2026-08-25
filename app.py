@@ -153,6 +153,8 @@ def login(dt: log_data):
         crsr.close()
         return -1
     uuid = uuid[0]
+    if uuid[:16] == "banned#checkcode":
+        return {"banned"}
     #
     sid = uuid4()
     crsr.execute(f"select * from Sessions where uuid='{uuid}'")
@@ -420,3 +422,20 @@ def getuser(dt: getuser_data):
     uuid = uuid[0]
     crsr.close()
     return userDataByUUID(uuid)
+
+class banuser_data(BaseModel):
+    username: str
+    password: str
+
+@app.post("/API/admin/banuser")
+def banuser(dt: banuser_data):
+    if not checkadmin(dt.password):
+        return "Heeey! You're not the administrator! What are you doing here? Get away!"
+    #
+    crsr = connect.cursor()
+    crsr.execute(f"select from Credentials uuid where username='{dt.username}'")
+    uuid = crsr.fetchone()[0]
+    crsr.execute(f"update Credentials set uuid='{'banned#checkcode'+uuid}' where username='{dt.username}'")
+    connect.commit()
+    crsr.close()
+    return {"user":dt.username,"res":"banned","uuid":uuid}
