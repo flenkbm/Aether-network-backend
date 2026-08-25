@@ -433,9 +433,10 @@ def banuser(dt: banuser_data):
         return "Heeey! You're not the administrator! What are you doing here? Get away!"
     #
     crsr = connect.cursor()
-    crsr.execute(f"select from Credentials uuid where username='{dt.username}'")
+    crsr.execute(f"select uuid from Credentials where username='{dt.username}'")
     uuid = crsr.fetchone()[0]
     crsr.execute(f"update Credentials set uuid='{'banned#checkcode'+uuid}' where username='{dt.username}'")
+    crsr.execute(f"delete from Sessions where uuid='{uuid}'")
     userdata = userDataByUUID(uuid)
     userdata["LVL"] -= 100
     updateUserData(userdata)
