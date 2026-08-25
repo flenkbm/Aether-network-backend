@@ -72,6 +72,10 @@ RECIPES = pd.DataFrame(gc.\
     open_by_url("https://docs.google.com/spreadsheets/d/1y7vBDIC67i9duQCJv5KWvk5D1G5KdPVZg4C5pnqgs04").\
     worksheet("4code").get_all_records())
 RECIPES.set_index("index", drop="index", inplace=True)
+C_REWARDS = pd.DataFrame(gc.\
+    open_by_url("https://docs.google.com/spreadsheets/d/1y7vBDIC67i9duQCJv5KWvk5D1G5KdPVZg4C5pnqgs04").\
+    worksheet("EXP").get_all_records())
+C_REWARDS.set_index("index", drop="index", inplace=True)
 SESION_TIMEOUT = 1000 * 60 * 60 * 12
 APPDATA = json.load(open("openfiles/appdata.json"))
 
@@ -324,10 +328,7 @@ def attemptCraft(dt: craft_data):
     userdata["inventory"][dt.el1] -= 1
     userdata["inventory"][dt.el2] -= 1
     userdata["inventory"][RECIPES[dt.el1][dt.el2]] = userdata["inventory"].get(RECIPES[dt.el1][dt.el2], 0)+1
-    if (dt.el1 in ["air", "fire", "water", "earth"] and dt.el2 in ["air", "fire", "water", "earth"]):
-        userdata["EXP"] += 20
-    else:
-        userdata["EXP"] += 60
+    userdata["EXP"] += C_REWARDS[dt.el1][dt.el2]
     updateLVL(userdata)
     updateUserData(userdata, uuid)
     return 0
